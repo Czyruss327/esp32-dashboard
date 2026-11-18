@@ -27,7 +27,7 @@
   <div class="leds">
     <div class="led" id="led1"><i></i>LED 1 (G25)</div>
     <div class="led" id="led2"><i></i>LED 2 (G26)</div>
-    <div class="led" id="led3"><i></i>LED 3 (G27)</div>
+    <div class="led" id="led3"><i></i>LED 3 (G12)</div>
     <div class="led" id="buzzer"><i></i>Buzzer (G32)</div>
   </div>
   <div class="mute" style="margin-top:10px" id="thresholds"></div>
@@ -74,7 +74,7 @@ function render(d) {
   $('alertinfo').textContent = d.last_alert
     ? 'Last alert: ' + d.last_alert.time + ' (' + d.last_alert.temperature + ' °C)'
     : 'No alerts logged yet';
-  $('thresholds').textContent = 'Alarm starts at ' + d.alert_on + ' °C and stops at ' + d.alert_clear + ' °C (manual mode only).';
+  $('thresholds').textContent = 'Alarm starts at ' + d.alert_on + ' °C and stops at ' + d.alert_clear + ' °C (Idle and Manual modes).';
 
   [1, 2, 3].forEach(n => {
     const el = $('led' + n);

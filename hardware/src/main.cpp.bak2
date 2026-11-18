@@ -1,0 +1,111 @@
+#include <Arduino.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define DHTPIN 13
+#define DHTTYPE DHT22
+#define LED_GREEN 25
+#define LED_YELLOW 26
+#define LED_RED 12
+#define BUZZER 32
+#define BUTTON 33
+#define I2C_SDA 14
+#define I2C_SCL 27
+
+DHT dht(DHTPIN, DHTTYPE);
+Adafruit_SSD1306 oled(128, 64, &Wire, -1);
+
+bool oledOk = false;
+int lastButton = HIGH;
+unsigned long lastSensorRead = 0;
+unsigned long lastScreenUpdate = 0;
+float temperature = NAN;
+float humidity = NAN;
+bool sensorOk = false;
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_YELLOW, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(BUTTON, INPUT_PULLUP);
+
+  dht.begin();
+
+  Wire.begin(I2C_SDA, I2C_SCL);
+  oledOk = oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+
+  Serial.println("Hardware test starting");
+
+  // Light each LED separately.
+  digitalWrite(LED_GREEN, HIGH);
+  delay(700);
+  digitalWrite(LED_GREEN, LOW);
+
+  digitalWrite(LED_YELLOW, HIGH);
+  delay(700);
+  digitalWrite(LED_YELLOW, LOW);
+
+  digitalWrite(LED_RED, HIGH);
+  delay(700);
+  digitalWrite(LED_RED, LOW);
+
+  // Brief buzzer test.
+  digitalWrite(BUZZER, HIGH);
+  delay(250);
+  digitalWrite(BUZZER, LOW);
+
+  Serial.println(oledOk ? "OLED detected" : "OLED not detected at 0x3C");
+  Serial.println("Press the button to test GPIO 33");
+}
+
+void loop() {
+  int button = digitalRead(BUTTON);
+  if (button != lastButton) {
+    Serial.println(button == LOW ? "Button pressed" : "Button released");
+    lastButton = button;
+  }
+
+  if (millis() - lastSensorRead >= 2200) {
+    lastSensorRead = millis();
+    humidity = dht.readHumidity();
+    temperature = dht.readTemperature();
+    sensorOk = !isnan(humidity) && !isnan(temperature);
+
+    if (sensorOk) {
+      Serial.printf("DHT22 OK: %.1f C, %.1f%% humidity\n",
+                    temperature, humidity);
+    } else {
+      Serial.println("DHT22 read failed");
+    }
+  }
+
+  if (oledOk && millis() - lastScreenUpdate >= 500) {
+    lastScreenUpdate = millis();
+    oled.clearDisplay();
+    oled.setTextColor(SSD1306_WHITE);
+    oled.setTextSize(1);
+    oled.setCursor(0, 0);
+    oled.println("Hardware test");
+
+    oled.setCursor(0, 18);
+    oled.print("DHT22: ");
+    oled.println(sensorOk ? "OK" : "No reading");
+
+    if (sensorOk) {
+      oled.setCursor(0, 32);
+      oled.printf("Temp: %.1f C", temperature);
+      oled.setCursor(0, 46);
+      oled.printf("Humidity: %.1f%%", humidity);
+    }
+
+    oled.setCursor(0, 58);
+    oled.print("Button: ");
+    oled.print(digitalRead(BUTTON) == LOW ? "pressed" : "released");
+    oled.display();
+  }
+}

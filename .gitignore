@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+hardware/src/secrets.h
+
+.pio/
+hardware/.pio/
